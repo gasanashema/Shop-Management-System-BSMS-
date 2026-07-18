@@ -14,6 +14,10 @@ if (isset($_SESSION['language'])) {
     $language = $_SESSION['language'];
 }
 
+if (empty($language) || !in_array($language, ['en', 'rw'])) {
+    $language = 'en';
+}
+
 // Include the appropriate language translation file
 if ($language === 'en') {
     include('../includes/en.php');

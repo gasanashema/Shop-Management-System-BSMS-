@@ -32,16 +32,17 @@ CREATE TABLE `accounts` (
   `password` varchar(20) NOT NULL,
   `type` varchar(20) NOT NULL,
   `names` varchar(30) NOT NULL,
-  `phone` varchar(15) NOT NULL
+  `phone` varchar(15) NOT NULL,
+  `language` varchar(10) NOT NULL DEFAULT 'en'
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `accounts`
 --
 
-INSERT INTO `accounts` (`account_id`, `password`, `type`, `names`, `phone`) VALUES
-(1, '123', 'manager', 'Shema Philbert', '+250799315310'),
-(2, '321', 'seller', 'Kagabo Jean', '+250783808585');
+INSERT INTO `accounts` (`account_id`, `password`, `type`, `names`, `phone`, `language`) VALUES
+(1, '123', 'manager', 'Shema Philbert', '+250799315310', 'en'),
+(2, '321', 'seller', 'Kagabo Jean', '+250783808585', 'en');
 
 -- --------------------------------------------------------
 

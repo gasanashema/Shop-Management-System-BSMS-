@@ -140,78 +140,98 @@ unset($_SESSION["confirmed"]);
                         <?php
 
                         include "../includes/connect.php";
-                        $query=mysqli_query($con,"SELECT * FROM products ORDER BY product_name ASC");
-                        if (mysqli_num_rows($query)<1) {
-                         echo "<h5 class='text-center text-muted'>No Report Available</h5>";
-                        }
-                        else{
-                          $i=1;
-                          $sum_inc = 0;
-                            $sum_int = 0;
-                          while ($row=mysqli_fetch_array($query)) {
-                            $check=mysqli_query($con,"SELECT * FROM stock_in WHERE p_id='$row[p_id]'");
-                            if (mysqli_num_rows($check)<=0) {
-                              continue;
-                            }
-                            // selecting data from stock in table
-                            $sel_q_in=mysqli_query($con,"SELECT SUM(quantity_in) AS q_in,SUM(quantity_in*unit_price) AS total_price,SUM(quantity_in*sell_price) AS expected_income,sell_price FROM stock_in WHERE p_id='$row[p_id]'");
-                            $sel_q_in_ftch=mysqli_fetch_array($sel_q_in);
+                         $query=mysqli_query($con,"SELECT 
+                             p.p_id, 
+                             p.product_name, 
+                             p.quality, 
+                             p.manufacturer,
+                             sin.q_in,
+                             sin.total_price,
+                             sin.expected_income,
+                             sout.total_q_out,
+                             sout.t_income,
+                             sout.intrest
+                         FROM products p
+                         INNER JOIN (
+                             SELECT 
+                                 p_id,
+                                 SUM(quantity_in) AS q_in,
+                                 SUM(quantity_in * unit_price) AS total_price,
+                                 SUM(quantity_in * sell_price) AS expected_income
+                             FROM stock_in
+                             GROUP BY p_id
+                         ) sin ON p.p_id = sin.p_id
+                         LEFT JOIN (
+                             SELECT 
+                                 si.p_id,
+                                 SUM(so.quantity_out) AS total_q_out,
+                                 SUM(so.quantity_out * si.sell_price) AS t_income,
+                                 SUM((si.sell_price - si.unit_price) * so.quantity_out) AS intrest
+                             FROM stock_out so
+                             INNER JOIN stock_in si ON so.stock_in_id = si.stock_in_id
+                             WHERE DATE_FORMAT(so.date_sold, '%Y-%m-%d') >= '{$fromdate}' 
+                               AND DATE_FORMAT(so.date_sold, '%Y-%m-%d') <= '{$todate}'
+                             GROUP BY si.p_id
+                         ) sout ON p.p_id = sout.p_id
+                         ORDER BY p.product_name ASC");
+                         if (mysqli_num_rows($query)<1) {
+                          echo "<h5 class='text-center text-muted'>No Report Available</h5>";
+                         }
+                         else{
+                           $i=1;
+                           $sum_inc = 0;
+                             $sum_int = 0;
+                           while ($row=mysqli_fetch_array($query)) {
+                           ?>
+                         <tr>
+                           <td><?php echo $i; ?></td>
+                           <td><?php echo $row["product_name"]; ?></td>
+                           <td class="text-nowrap"><?php echo $lang["quality"].$row["quality"]; ?></td>
+                           <td><?php echo $row["manufacturer"]; ?></td>
+                           <td><?php echo $row["q_in"]; ?></td>
+                           <td class="text-nowrap"><span id="numbersTable"><?php echo $row["total_price"]; ?></span> Rwf</td>
+                           <td class="text-nowrap"><span id="numbersTable"><?php echo $row["expected_income"]-$row["total_price"];?></span> Rwf</td>
+                           <td <?php if ($row["total_q_out"]==NULL) {
+                             echo "class='bg-danger text-dark'";
+                           } ?>>
+                             <?php
+                           if ($row["total_q_out"]==NULL) {
+                             echo 0;
+                           }else{
+                            echo $row["total_q_out"]; 
+                           }
+                          ?></td>
+                           <td><?php echo $row["q_in"]-($row["total_q_out"] ?? 0);?></td>
+                           <td <?php if ($row["t_income"]==NULL) {
+                             echo "class='bg-danger text-dark'";
+                           } ?>><span id="numbersTable">
+                           <?php
+                           if ($row["t_income"]==NULL) {
+                             echo 0;
+                           }else{
+                            echo $row["t_income"]; 
+                           }
+                          ?></span> Rwf</td>
+                             <td <?php if ($row["intrest"]==NULL) {
+                             echo "class='bg-danger text-dark'";
+                           } ?>><span id="numbersTable">
+                               <?php
+                             if ($row["intrest"]==NULL) {
+                               echo 0;
+                             }else{
+                              echo $row["intrest"]; 
+                             }
+                            ?></span> Rwf</td>
+                                              
+                         </tr>
 
-                            // selecting data from stock out table
-                            $sel_q_out=mysqli_query($con,"SELECT SUM(quantity_out) AS total_q_out,SUM(quantity_out*sell_price) AS t_income,SUM((sell_price-unit_price)*quantity_out) AS intrest FROM stock_out INNER JOIN stock_in INNER JOIN products ON stock_out.stock_in_id=stock_in.stock_in_id AND stock_in.p_id=products.p_id WHERE products.p_id='$row[p_id]' AND DATE_FORMAT(stock_out.date_sold,'%Y-%m-%d')>='$fromdate' AND DATE_FORMAT(stock_out.date_sold,'%Y-%m-%d')<='$todate'");
-                            $sel_q_out_ftch=mysqli_fetch_array($sel_q_out);
+                           <?php
+                           $sum_inc += $row["t_income"];
+                           $sum_int += $row["intrest"];
 
-                            
-                          ?>
-                        <tr>
-                          <td><?php echo $i; ?></td>
-                          <td><?php echo $row["product_name"]; ?></td>
-                          <td class="text-nowrap"><?php echo $lang["quality"].$row["quality"]; ?></td>
-                          <td><?php echo $row["manufacturer"]; ?></td>
-                          <td><?php echo $sel_q_in_ftch["q_in"]; ?></td>
-                          <td class="text-nowrap"><span id="numbersTable"><?php echo $sel_q_in_ftch["total_price"]; ?></span> Rwf</td>
-                          <td class="text-nowrap"><span id="numbersTable"><?php echo $sel_q_in_ftch["expected_income"]-$sel_q_in_ftch["total_price"];?></span> Rwf</td>
-                          <td <?php if ($sel_q_out_ftch["total_q_out"]==NULL) {
-                            echo "class='bg-danger text-dark'";
-                          } ?>>
-                            <?php
-                          if ($sel_q_out_ftch["total_q_out"]==NULL) {
-                            echo 0;
-                          }else{
-                           echo $sel_q_out_ftch["total_q_out"]; 
-                          }
-                         ?></td>
-                          <td><?php echo $sel_q_in_ftch["q_in"]-$sel_q_out_ftch["total_q_out"];?></td>
-                          <td <?php if ($sel_q_out_ftch["t_income"]==NULL) {
-                            echo "class='bg-danger text-dark'";
-                          } ?>><span id="numbersTable">
-                          <?php
-                          if ($sel_q_out_ftch["t_income"]==NULL) {
-                            echo 0;
-                          }else{
-                           echo $sel_q_out_ftch["t_income"]; 
-                          }
-                         ?></span> Rwf</td>
-                            <td <?php if ($sel_q_out_ftch["intrest"]==NULL) {
-                            echo "class='bg-danger text-dark'";
-                          } ?>><span id="numbersTable">
-                              <?php
-                            if ($sel_q_out_ftch["intrest"]==NULL) {
-                              echo 0;
-                            }else{
-                             echo $sel_q_out_ftch["intrest"]; 
-                            }
-                           ?></span> Rwf</td>
-                                             
-                        </tr>
-
-                          <?php
-                          $sum_inc += $sel_q_out_ftch["t_income"];
-                          $sum_int += $sel_q_out_ftch["intrest"];
-
-                          $i++;
-                          }
-                        }
+                           $i++;
+                           }
+                         }
 
 
                         ?>

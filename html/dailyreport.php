@@ -94,76 +94,68 @@ unset($_SESSION["confirmed"]);
                       </thead>
                       <tbody>
                         <?php
-                        include "../includes/connect.php";
-                        $d_report=mysqli_query($con,"SELECT * FROM stock_out INNER JOIN stock_in INNER JOIN products ON stock_out.stock_in_id=stock_in.stock_in_id AND stock_in.p_id=products.p_id WHERE stock_out.date_sold='$today' GROUP BY product_name ORDER BY product_name ASC");
-                       $i=1;
-                       $sum_inc = 0;
-                       $sum_int = 0;
-                        while($row=mysqli_fetch_array($d_report)){
-                          $check=mysqli_query($con,"SELECT SUM(quantity_out) as q_out,SUM(quantity_out*sell_price) AS t_income,SUM((sell_price-unit_price)*quantity_out) AS intrest FROM stock_out INNER JOIN stock_in INNER JOIN products ON stock_out.stock_in_id=stock_in.stock_in_id AND stock_in.p_id=products.p_id WHERE products.p_id='$row[p_id]' AND stock_out.date_sold='$today'");
-                            $records=mysqli_fetch_array($check);
-
-                         // ----------------------------------------------------------
-
-                            // getting total stockin
-          $total_in=mysqli_query($con,"SELECT SUM(quantity_in) as total_s_in from stock_in WHERE p_id='$row[p_id]'");
-          $s_in=mysqli_fetch_array($total_in);
-
-          // check if total stock in quantity is not null
-          if ($s_in["total_s_in"]==NULL) {
-            $stock_in_quantity=0;
-          }
-          else{ 
-          $stock_in_quantity=$s_in["total_s_in"];
-          }
-          // -----------------------------
-          
-
-          // getting total stock_out
-
-          $total_out=mysqli_query($con,"SELECT SUM(quantity_out) as total_s_out from stock_out INNER JOIN stock_in ON stock_out.stock_in_id=stock_in.stock_in_id WHERE stock_in.p_id='$row[p_id]'");
-          $s_out=mysqli_fetch_array($total_out);
-
-           // check if total stock in quantity is not null
-          if ($s_out["total_s_out"]==NULL) {
-            $stock_out_quantity=0;
-          }
-          else{ 
-          $stock_out_quantity=$s_out["total_s_out"];
-          }
-          // -----------------------------
-
-          // calculating remaining quantity
-          $remaining_quantity=$stock_in_quantity-$stock_out_quantity;
-
-
-
-                          //---------------------------------------------------------- 
-                         
-                          ?>
-                        <tr>
-                          <td><?php echo $i; ?></td>
-                          <td><?php echo $row["product_name"]; ?></td>
-                          <td class="text-nowrap"><?php echo $lang["quality"].$row["quality"]; ?></td>
-                          <td><?php echo $row["manufacturer"]; ?></td>
-                          <td><?php echo $records["q_out"];?></td>
-                          <td><?php
-                           if($remaining_quantity <0){
-                            echo "<span class='text-danger'>0</span>";
-                           }else{
-                            echo $remaining_quantity;
-                           }
-                         ?></td>
-                          <td class="text-nowrap"><span id="numbersTable"> <?php echo $records["t_income"];?> </span> Rwf</td>
-                          <td class="text-nowrap"><span id="numbersTable"> <?php echo $records["intrest"];?> </span> Rwf</td>
-                                             
-                        </tr>
-                      
-                          <?php
-                          $sum_inc += $records["t_income"];
-                          $sum_int += $records["intrest"];
-                          $i++;
-                        }
+                         include "../includes/connect.php";
+                         $d_report=mysqli_query($con,"SELECT 
+                             p.p_id,
+                             p.product_name,
+                             p.quality,
+                             p.manufacturer,
+                             today_out.q_out,
+                             today_out.t_income,
+                             today_out.intrest,
+                             COALESCE(sin.total_s_in, 0) - COALESCE(sout.total_s_out, 0) AS remaining_quantity
+                         FROM products p
+                         INNER JOIN (
+                             SELECT 
+                                 si.p_id,
+                                 SUM(so.quantity_out) AS q_out,
+                                 SUM(so.quantity_out * si.sell_price) AS t_income,
+                                 SUM((si.sell_price - si.unit_price) * so.quantity_out) AS intrest
+                             FROM stock_out so
+                             INNER JOIN stock_in si ON so.stock_in_id = si.stock_in_id
+                             WHERE so.date_sold = '{$today}'
+                             GROUP BY si.p_id
+                         ) today_out ON p.p_id = today_out.p_id
+                         LEFT JOIN (
+                             SELECT p_id, SUM(quantity_in) AS total_s_in
+                             FROM stock_in
+                             GROUP BY p_id
+                         ) sin ON p.p_id = sin.p_id
+                         LEFT JOIN (
+                             SELECT si.p_id, SUM(so.quantity_out) AS total_s_out
+                             FROM stock_out so
+                             INNER JOIN stock_in si ON so.stock_in_id = si.stock_in_id
+                             GROUP BY si.p_id
+                         ) sout ON p.p_id = sout.p_id
+                         ORDER BY p.product_name ASC");
+                        $i=1;
+                        $sum_inc = 0;
+                        $sum_int = 0;
+                         while($row=mysqli_fetch_array($d_report)){
+                           ?>
+                         <tr>
+                           <td><?php echo $i; ?></td>
+                           <td><?php echo $row["product_name"]; ?></td>
+                           <td class="text-nowrap"><?php echo $lang["quality"].$row["quality"]; ?></td>
+                           <td><?php echo $row["manufacturer"]; ?></td>
+                           <td><?php echo $row["q_out"];?></td>
+                           <td><?php
+                            if($row["remaining_quantity"] <0){
+                             echo "<span class='text-danger'>0</span>";
+                            }else{
+                             echo $row["remaining_quantity"];
+                            }
+                          ?></td>
+                           <td class="text-nowrap"><span id="numbersTable"> <?php echo $row["t_income"];?> </span> Rwf</td>
+                           <td class="text-nowrap"><span id="numbersTable"> <?php echo $row["intrest"];?> </span> Rwf</td>
+                                              
+                         </tr>
+                       
+                           <?php
+                           $sum_inc += $row["t_income"];
+                           $sum_int += $row["intrest"];
+                           $i++;
+                         }
 
                         ?>
                         <tr>

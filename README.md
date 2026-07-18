@@ -6,23 +6,27 @@ Boutique Shop Management System is a lightweight, responsive PHP and MySQL web a
 
 ## 📸 Application Screenshots
 
-### 1. Manager Panel Dashboard
+### 1. Modern Login Portal
+Bilingual authentication panel supporting dual-language login modes (English & Kinyarwanda).
+![Login Portal](screenshoots/login.png)
+
+### 2. Manager Panel Dashboard
 Visualizes shop management metrics and provides quick shortcuts for managing products, adding sales, and tracking client debts.
 ![Manager Panel Dashboard](screenshoots/Screenshot%20from%202026-07-18%2022-52-17.png)
 
-### 2. Product Catalog View
+### 3. Product Catalog View
 A tabular overview displaying products, quality tiers, and manufacturers.
 ![Product Catalog View](screenshoots/Screenshot%20from%202026-07-18%2022-52-27.png)
 
-### 3. Inventory Stock Ledger
+### 4. Inventory Stock Ledger
 Manages stock-in details, purchase values, unit cost pricing, expected retail incomes, and batch expiration tracking.
 ![Inventory Stock Ledger](screenshoots/Screenshot%20from%202026-07-18%2022-52-37.png)
 
-### 4. Custom Sales Range Report
+### 5. Custom Sales Range Report
 Generates total revenue, sales aggregates, and net profit margins between any two selected dates.
 ![Sales Range Report](screenshoots/Screenshot%20from%202026-07-18%2022-54-01.png)
 
-### 5. Multi-Language Support (Kinyarwanda Translation)
+### 6. Multi-Language Support (Kinyarwanda Translation)
 Full localization capability supporting both English and Kinyarwanda dialects dynamically mapped to user settings.
 ![Kinyarwanda Localization](screenshoots/Screenshot%20from%202026-07-18%2022-54-37.png)
 

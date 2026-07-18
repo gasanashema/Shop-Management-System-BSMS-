@@ -41,7 +41,7 @@ CREATE TABLE `accounts` (
 --
 
 INSERT INTO `accounts` (`account_id`, `password`, `type`, `names`, `phone`, `language`) VALUES
-(1, '123', 'manager', 'Shema Philbert', '+250799315310', 'en'),
+(1, '123', 'manager', 'Shema Philbert', '+250799315313', 'en'),
 (2, '321', 'seller', 'Kagabo Jean', '+250783808585', 'en');
 
 -- --------------------------------------------------------
